@@ -1,0 +1,351 @@
+type Comments {
+  created_at: DateTime
+  id: ID!
+  post: Post
+    @materializer(
+      query: "getPost"
+      arguments: [{ name: "id", field: "post_id" }]
+    )
+  post_id: ID
+  text: String
+  username: String
+  user_email: String
+  user_image: String
+  comment_image: String
+}
+
+type Votes {
+  id: ID!
+  created_at: DateTime
+  username: String
+  post_id: ID
+  upvote: Boolean
+}
+
+type Images {
+  id: ID!
+  created_at: DateTime
+  post_id: ID
+  url: String
+}
+
+type Post {
+  body: String
+  post_created_at: DateTime
+  id: ID!
+  post_title: String
+  images: [Images]
+    @materializer(
+      query: "getImagesByPostId"
+      arguments: [{ name: "post_id", field: "id" }]
+    )
+  topics: [Topics]
+    @materializer(
+      query: "getTopicListById"
+      arguments: [{ name: "id", field: "topic_id" }]
+    )
+  comments: [Comments]
+    @materializer(
+      query: "getCommentByPostId"
+      arguments: [{ name: "post_id", field: "id" }]
+    )
+  votes: [Votes]
+    @materializer(
+      query: "getVotesByPostId"
+      arguments: [{ name: "post_id", field: "id" }]
+    )
+  topic_id: ID
+  user_email: String
+  username: String
+  user_image: String
+  active: Int
+}
+
+type Topics {
+  created_at: DateTime
+  id: ID!
+  title: String
+  topic_image: String
+}
+
+type Notes {
+  created_at: DateTime
+  id: ID!
+  text: String
+  topic_id: ID
+  link: String
+  username: String
+}
+
+type Status {
+  created_at: DateTime
+  id: ID!
+  last_online: String
+  brand: String
+  store_id: Int
+}
+
+"""
+These are some examples of queries generated from the schema. Feel free to modify them or add your own.
+"""
+type Query {
+  getStatus(id: ID!): Status
+    @dbquery(
+      type: "postgresql"
+      schema: "public"
+      table: "status"
+      configuration: "postgresql_config"
+    )
+  getCommentByPostId(post_id: ID!): [Comments]
+    @dbquery(
+      type: "postgresql"
+      query: """
+      select * from "comments" where "post_id" = $1
+      """
+      configuration: "postgresql_config"
+    )
+  getImagesByPostId(post_id: ID!): [Images]
+    @dbquery(
+      type: "postgresql"
+      query: """
+      select * from "images" where "post_id" = $1
+      order by "images"."id" asc
+      """
+      configuration: "postgresql_config"
+    )
+  getVotesByPostId(post_id: ID!): [Votes]
+    @dbquery(
+      type: "postgresql"
+      query: """
+      select * from "votes" where "post_id" = $1
+      order by "created_at" desc
+      """
+      configuration: "postgresql_config"
+    )
+  getCommentsByPostId(post_id: ID!): [Comments]
+    @dbquery(
+      type: "postgresql"
+      query: """
+      select * from "comments" where "post_id" = $1
+      order by "created_at" asc
+      """
+      configuration: "postgresql_config"
+    )
+  getTopicListById(id: ID!): [Topics]
+    @dbquery(
+      type: "postgresql"
+      query: """
+      select * from "topics" where "id" = $1
+      """
+      configuration: "postgresql_config"
+    )
+  getComment(id: ID!): Comments
+    @dbquery(
+      type: "postgresql"
+      schema: "public"
+      table: "comments"
+      configuration: "postgresql_config"
+    )
+  getPostList: [Post]
+    @dbquery(
+      type: "postgresql"
+      query: """
+      select * from "post"
+      where "post"."topic_id" <> 44 and "post"."topic_id" <> 70 and "post"."active" = 1
+      order by "post"."post_created_at" desc
+      """
+      configuration: "postgresql_config"
+    )
+  getPostTitles: [Post]
+    @dbquery(
+      type: "postgresql"
+      query: """
+      select "post_title", "id" from "post"
+      where "topic_id" <> 44 and "topic_id" <> 70 and "active" = 1
+      """
+      configuration: "postgresql_config"
+    )
+  getPostListByPostId(post_id: ID!): Post 
+    @dbquery(
+      type: "postgresql"
+      query: """
+      select * from "post"
+      where "post"."id" = $1
+      """
+      configuration: "postgresql_config"
+    )
+  getPostListByTopic(title: String!): [Post]
+    @dbquery(
+      type: "postgresql"
+      query: """
+      select *, "post".id as id from "post"
+      join "topics" on "topics"."id" = "post"."topic_id"
+      where "topics"."title" = $1 and "post"."active" = 1
+      order by "post"."post_created_at" desc
+      """
+      configuration: "postgresql_config"
+    )
+  getNoticePosts: [Post]
+    @dbquery(
+      type: "postgresql"
+      query: """
+      select * from "post"
+      where "post"."topic_id" = 44
+      order by "post"."post_created_at" desc
+      """
+      configuration: "postgresql_config"
+    )
+  getNotesList(title: String!): [Notes]
+    @dbquery(
+      type: "postgresql"
+      query: """
+      select *, "notes".id as id from "notes"
+      join "topics" on "topics"."id" = "notes"."topic_id"
+      where "topics"."title" = $1
+      order by "notes"."created_at" desc
+      """
+      configuration: "postgresql_config"
+    )
+  getPost(id: ID!): Post
+    @dbquery(
+      type: "postgresql"
+      schema: "public"
+      table: "post"
+      configuration: "postgresql_config"
+    )
+  getTopicList: [Topics]
+    @dbquery(
+      type: "postgresql"
+      query: """
+      select "title", "id" from "topics"
+      where "topics"."id" <> 44 and "topics"."id" <> 70
+      """
+      configuration: "postgresql_config"
+    )
+  getTopicListByTitle(title: String!): [Topics]
+    @dbquery(
+      type: "postgresql"
+      schema: "public"
+      query: """
+      select * from "topics" where "title" = $1
+      """
+      configuration: "postgresql_config"
+    )
+  getPostListByTitle(post_title: String!): [Post]
+    @dbquery(
+      type: "postgresql"
+      schema: "public"
+      query: """
+      select * from "post" where "post_title" = $1
+      """
+      configuration: "postgresql_config"
+    )
+  getTopic(id: ID!): Topics
+    @dbquery(
+      type: "postgresql"
+      schema: "public"
+      table: "topics"
+      configuration: "postgresql_config"
+    )
+}
+
+"""
+These are some examples of mutations generated from the schema. Feel free to modify them or add your own.
+"""
+type Mutation {
+  insertStatus(
+    store_id: Int!
+    brand: String!
+    last_online: String!
+  ): Status
+    @dbquery(
+      type: "postgresql"
+      schema: "public"
+      table: "status"
+      dml: INSERT
+      configuration: "postgresql_config"
+    )
+  insertComment(
+    post_id: ID!
+    text: String!
+    user_email: String!
+    username: String!
+    user_image: String!
+    comment_image: String!
+  ): Comments
+    @dbquery(
+      type: "postgresql"
+      schema: "public"
+      table: "comments"
+      dml: INSERT
+      configuration: "postgresql_config"
+    )
+  insertImage(
+    post_id: ID!
+    url: String!
+  ): Images
+    @dbquery(
+      type: "postgresql"
+      schema: "public"
+      table: "images"
+      dml: INSERT
+      configuration: "postgresql_config"
+    )
+  insertVote(
+    post_id: ID!
+    username: String!
+    upvote: Boolean!
+  ): Votes
+    @dbquery(
+      type: "postgresql"
+      schema: "public"
+      table: "votes"
+      dml: INSERT
+      configuration: "postgresql_config"
+    )
+  deleteComment(id: ID!): Comments
+    @dbquery(
+      type: "postgresql"
+      schema: "public"
+      table: "comments"
+      dml: DELETE
+      configuration: "postgresql_config"
+    )
+  insertPost(
+    body: String!
+    topic_id: ID!
+    post_title: String!
+    user_email: String!
+    username: String!
+    user_image: String!
+    active: Int!
+  ): Post
+    @dbquery(
+      type: "postgresql"
+      schema: "public"
+      table: "post"
+      dml: INSERT
+      configuration: "postgresql_config"
+    )
+  insertTopic(title: String!): Topics
+    @dbquery(
+      type: "postgresql"
+      schema: "public"
+      table: "topics"
+      dml: INSERT
+      configuration: "postgresql_config"
+    )
+  insertNote(
+    text: String!
+    topic_id: ID!
+    link: String!
+    username: String!
+  ): Notes
+    @dbquery(
+      type: "postgresql"
+      schema: "public"
+      table: "notes"
+      dml: INSERT
+      configuration: "postgresql_config"
+    )
+}

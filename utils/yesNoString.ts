@@ -1,0 +1,1 @@
+export const yesNoString = (input: boolean) => (input ? 'Yes' : 'No');

@@ -1,0 +1,2 @@
+# Legacy Helpcat project.
+- A Redcat support app that interacts with the Redcat public API (public client location & menu data) & functionality to allow users to create a support knowledge base through posts.
